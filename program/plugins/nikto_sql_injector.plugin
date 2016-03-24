@@ -33,7 +33,7 @@ sub nikto_sql_injector_init {
 
 sub nikto_sql_injector {
 	use URI;
-	use URI::Encode qw(uri_encode uri_decode);
+	use URI::Escape;
 	use URI::Split qw(uri_split uri_join);	
     use URI::QueryParam;
     
@@ -54,7 +54,7 @@ sub nikto_sql_injector {
     $flags{'nohost'} = 1;
 
     #this identifies the original url
-    $urls{ $mark->{'ident'} } = 1;
+    #$urls{ $mark->{'ident'} } = 1;
     
     #split our ident (this contains the url with the query)
     ($scheme, $auth, $path, $query, $frag) = uri_split($mark->{'ident'});
@@ -62,7 +62,7 @@ sub nikto_sql_injector {
     # process the queries, re-making them with injecions
     foreach my $data (keys %sql_injections) {
     	# url encode the injection string
-        my $injection = uri_encode($data);
+        my $injection = uri_escape($data);
     	
     	# create another object with the original url
 		my $uri = URI->new( $mark->{'ident'} );
@@ -92,8 +92,7 @@ sub nikto_sql_injector {
         return if $mark->{'terminate'};
 
         # request by hostname
-        my ($res, $content, $error, $request, $response) =
-          nfetch($mark, "$item", "GET", "", "", "", "sql_injector");
+        my ($res, $content, $error, $request, $response) = nfetch($mark, "$item", "GET", "", "", "", "sql_injector");
 
         if (($res == 200) 
             && (!is_404($item, $content, $res, $response->{'location'})) 
