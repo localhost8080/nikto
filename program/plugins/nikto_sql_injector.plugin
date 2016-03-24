@@ -33,6 +33,7 @@ sub nikto_sql_injector_init {
 
 sub nikto_sql_injector {
 	use URI;
+	use URI::Encode qw(uri_encode uri_decode);
 	use URI::Split qw(uri_split uri_join);	
     use URI::QueryParam;
     
@@ -61,9 +62,7 @@ sub nikto_sql_injector {
     # process the queries, re-making them with injecions
     foreach my $data (keys %sql_injections) {
     	# url encode the injection string
-    	my $encode = URI::Encode->new( { encode_reserved => 0 } );
-        my $injection = $encode->encode($data);
-    	
+        my $injection = uri_encode($data);
     	
     	# create another object with the original url
 		my $uri = URI->new( $mark->{'ident'} );
