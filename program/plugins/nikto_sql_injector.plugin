@@ -1,0 +1,109 @@
+#VERSION,2.00
+###############################################################################
+#  Copyright (C) 2016 Jonathan Mitchell
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; version 2
+#  of the License only.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to
+#  Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+###############################################################################
+# PURPOSE:
+# Look for sql injection  based on manupulating url parameters
+###############################################################################
+sub nikto_sql_injector_init {
+    my $id = { name        => "sql_injector",
+               full_name   => "sql injector",
+               author      => "jonathan",
+               description => "Look for sql injection",
+               hooks       => { scan => { method => \&nikto_sql_injector, }, },
+               copyright   => "2016 jonathan"
+               };
+
+    return $id;
+}
+
+sub nikto_sql_injector {
+	use URI;
+	use URI::Split qw(uri_split uri_join);	
+    use URI::QueryParam;
+    
+	
+    my ($mark) = @_;
+    my ($found, @urls,);
+    my (@sql_injections);
+    my (%flags, %files);
+
+    # these are examples from my 'classification section'
+    $sql_injections{'tautology'} = "' OR 1=1; -- ";
+    $sql_injections{'illegal'} = "' OR 2=9;  -- ";
+    $sql_injections{'union'} = "' UNION ALL SELECT user_email from wp_users; --";
+    $sql_injections{'piggy'} = "'; select user_email from wp_users; --";
+
+    
+    
+    $flags{'nohost'} = 1;
+
+    #this identifies the original url
+    $urls{ $mark->{'ident'} } = 1;
+    
+    #split our ident (this contains the url with the query)
+    ($scheme, $auth, $path, $query, $frag) = uri_split($mark->{'ident'});
+    
+    # process the queries, re-making them with injecions
+    foreach my $data (keys %sql_injections) {
+    	# url encode the injection string
+    	my $encode = URI::Encode->new( { encode_reserved => 0 } );
+        my $injection = $encode->encode($data);
+    	
+    	
+    	# create another object with the original url
+		my $uri = URI->new( $mark->{'ident'} );
+		
+		#loop and replace each query with the injected version
+		for my $key ($uri->query_param) {
+			# make our injected query value
+            $injected_value = $key . $injection;
+            
+            # add the original query to a url object that we will modify later
+            $injected_query = URI::Query->new($query);
+            # replace the original query value with the new injected one		     
+		    $injected_query->replace($key => $injected_value);
+		     
+		     # re-make the new url
+	        $injected_url = uri_join($scheme, $auth, $path, $injected_query, $frag);
+	        # store it as the key in the url array
+	        $urls{ $injected_url } = 1;
+		}
+
+    }
+
+    
+    
+
+    foreach my $item (keys %urls) {
+        return if $mark->{'terminate'};
+
+        # request by hostname
+        my ($res, $content, $error, $request, $response) =
+          nfetch($mark, "$item", "GET", "", "", "", "sql_injector");
+
+        if (($res == 200) 
+            && (!is_404($item, $content, $res, $response->{'location'})) 
+            && ($content =~ /Error/i) 
+            && ($response->{'content-type'} eq 'text/html')) {
+                add_vulnerability($mark, "$item: SQL Injection found", 740001, 0, "GET", "$item", $request, $response);
+            }
+
+    }
+}
+
+1;
