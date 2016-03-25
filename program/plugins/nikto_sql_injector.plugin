@@ -24,14 +24,8 @@ sub nikto_sql_injector_init {
                full_name   => "sql injector",
                author      => "jonathan",
                description => "Look for sql injection",
-               hooks       => { 
-               	            scan => { 
-               	            	method => \&nikto_sql_injector,
-               	            }, 
-               },
-               options => {
-                         url => "full url with parameters to inject",
-               },
+               hooks       => { scan => {method => \&nikto_sql_injector,},},
+               options     => { url => "full url with parameters to inject", },
                copyright   => "2016 jonathan",
     };
 
@@ -43,6 +37,7 @@ sub nikto_sql_injector {
 	use URI::Escape;
 	use URI::Split qw(uri_split uri_join);	
     use URI::QueryParam;
+    
 
     my ($mark, $parameters) = @_;
     my ($found, @urls,);
@@ -73,17 +68,15 @@ sub nikto_sql_injector {
 		#loop and replace each query with the injected version
 		foreach my $key ($uri->query_param) {
 			# make our injected query value
-            $injected_value = $key . $injection;
+            $injected_value = $uri->query_param($key) . $injection;
             
-            # add the original query to a url object that we will modify later
-            $injected_query = URI::Query->new($query);
-            # replace the original query value with the new injected one		     
-		    $injected_query->replace($key => $injected_value);
+            #clone the original uri
+            $new_uri = $uri->clone;
+            #update the parameter with the new injected version
+            $new_uri->query_param($key, $injected_value);
 		     
-		     # re-make the new url
-	        $injected_url = uri_join($scheme, $auth, $path, $injected_query, $frag);
 	        # store it as the key in the url array
-	        $urls{ $injected_url } = 1;
+	        $urls{ $new_uri->as_string } = 1;
 		}
 
     }
