@@ -76,7 +76,7 @@ sub nikto_sql_injector {
             $new_uri->query_param($key, $injected_value);
 		     
 	        # store it as the key in the url array
-	        $urls{ $new_uri->as_string } = 1;
+	        $urls{ $new_uri->query } = 1;
 		}
 
     }
