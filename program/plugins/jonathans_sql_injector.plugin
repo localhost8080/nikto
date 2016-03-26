@@ -19,9 +19,9 @@
 # PURPOSE:
 # Look for sql injection  based on manupulating url parameters
 ###############################################################################
-sub jonathans_sql_scanner_init {
-    my $id = { name        => "sql_injector",
-               full_name   => "sql injector",
+sub jonathans_sql_injector_init {
+    my $id = { name        => "jonathans_sql_injector",
+               full_name   => "jonathans sql injector",
                author      => "jonathan",
                description => "Look for sql injection",
                hooks       => { scan => {method => \&jonathans_sql_scanner,},},
