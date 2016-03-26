@@ -46,7 +46,7 @@ sub jonathans_sql_scanner {
     $flags{'nohost'} = 1;
     
     # set a hash list containing our urls to test by passing the list of injections and the url
-    my (%urls) = &set_url(\%sql_injections, \$parameters->{ 'url' });
+    my (%urls) = set_url(%sql_injections, $parameters->{ 'url' });
     #test our urls
     foreach my $uri (keys %urls) {
         return if $mark->{'terminate'};
@@ -62,12 +62,10 @@ sub set_url {
 	use URI;
     use URI::QueryParam;
     
-	my $sql_injections_ref = shift;
-    my $parameters_ref = shift;
-
-    my %sql_injections = %{$sql_injections_ref};
-    my %parameters = %{$parameters_ref};
+	my $sql_injections = %{$_[0]};
+    my $parameters = $_[1];
 	
+	my %urls;
 	
 	# process the queries, re-making them with injecions
     foreach my $injection (values %sql_injections) {
