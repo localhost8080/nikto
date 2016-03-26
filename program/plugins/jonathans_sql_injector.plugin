@@ -45,10 +45,17 @@ sub jonathans_sql_scanner {
 
     $flags{'nohost'} = 1;
     
-    # set a hash list containing our urls to test
-    %urls = set_url(\%sql_injections, \$parameters);
+    # set a hash list containing our urls to test by passing the list of injections and the url
+    my (%urls) = &set_url(\%sql_injections, \$parameters->{ 'url' });
     #test our urls
-    launch_scan(\%urls);
+    foreach my $uri (keys %urls) {
+        return if $mark->{'terminate'};
+
+        # request by hostname
+        my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "sql_injector");
+        # perform some pattern matching to quickly check out result
+        compare_results($res, $content, $error, $request, $response);
+    }
 }
 
 sub set_url {
@@ -66,7 +73,7 @@ sub set_url {
     foreach my $injection (values %sql_injections) {
         
         # create another object with the original url
-        my $uri = URI->new( $parameters->{'url'} );
+        my $uri = URI->new($parameters);
         
         #loop and replace each query with the injected version
         foreach my $key ($uri->query_param) {
@@ -83,25 +90,6 @@ sub set_url {
     
     #returl our modified hash list of urls with injections
     return \%urls;
-}
-
-sub launch_scan {
-	
-	my $urls_ref = shift;
-    my $mark_ref = shift;
-
-    my %urls = %{$urls_ref};
-    my %mark = %{$mark_ref};
-    
-	
-	foreach my $uri (keys %urls) {
-        return if $mark->{'terminate'};
-
-        # request by hostname
-        my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "sql_injector");
-        # perform some pattern matching to quickly check out result
-        compare_results($res, $content, $error, $request, $response);
-    }
 }
 
 sub compare_results {
