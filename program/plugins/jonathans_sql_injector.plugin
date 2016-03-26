@@ -54,7 +54,7 @@ sub jonathans_sql_scanner {
         # request by hostname
         my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "sql_injector");
         # perform some pattern matching to quickly check out result
-        compare_results($res, $content, $error, $request, $response);
+        compare_results($res, $content, $error, $request, $response, $uri, $mark);
     }
 }
 
@@ -86,10 +86,10 @@ sub set_url {
 }
 
 sub compare_results {
-	my ($res, $content, $error, $request, $response) = @_;
+	my ($res, $content, $error, $request, $response, $uri, $mark) = @_;
 	# simple error based checking for proof-of-concept
 	if (($content =~ /error in your SQL syntax/)) {
-                      print "\n".'sql injection found:'."\n"."$uri";
+                      print "\n".'sql injection found:'."\n"."$mark->{'hostname'}$mark->{'root'}$uri";
                       # Looks like a match - raise this up to the front end
                       add_vulnerability(
                             $mark,                   # mark structure to identify target
