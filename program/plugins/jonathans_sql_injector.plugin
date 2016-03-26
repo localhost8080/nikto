@@ -45,8 +45,8 @@ sub jonathans_sql_scanner {
 
     $flags{'nohost'} = 1;
     
-    # set a (global) hash list containing our urls to test by passing the list of injections and the url
-    set_url();
+    # set a hash list containing our urls to test by passing the list of injections and the url
+    set_url($parameters->{ 'url' }, %sql_injections);
     #test our urls
     foreach my $uri (keys %urls) {
         return if $mark->{'terminate'};
@@ -61,12 +61,15 @@ sub jonathans_sql_scanner {
 sub set_url {
 	use URI;
     use URI::QueryParam;
-    	
+    
+    my $parameters = $_[0];
+	my $sql_injections = %{$_[1]};
+	
 	# process the queries, re-making them with injecions
     foreach my $injection (values %sql_injections) {
         
         # create another object with the original url
-        my $uri = URI->new($parameters->{'url'});
+        my $uri = URI->new($parameters);
         
         #loop and replace each query with the injected version
         foreach my $key ($uri->query_param) {
@@ -76,7 +79,7 @@ sub set_url {
             #update the parameter with the new injected version
             $new_uri->query_param($key, $injection);
             print $new_uri->query."\n";
-            # store it as the key in the (global) url array
+            # store it as the key in the url array
             $urls{ "?".$new_uri->query } = 1;
         }
     }
