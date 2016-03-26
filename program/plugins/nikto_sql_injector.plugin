@@ -45,7 +45,9 @@ sub jonathans_sql_scanner {
 
     $flags{'nohost'} = 1;
     
+    # set a hash list containing our urls to test
     %urls = set_url(\%sql_injections, \$parameters);
+    #test our urls
     launch_scan(\%urls);
 }
 
@@ -78,6 +80,8 @@ sub set_url {
             $urls{ "?".$new_uri->query } = 1;
         }
     }
+    
+    #returl our modified hash list of urls with injections
     return \%urls;
 }
 
@@ -95,19 +99,21 @@ sub launch_scan {
 
         # request by hostname
         my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "sql_injector");
+        # perform some pattern matching to quickly check out result
         compare_results($res, $content, $error, $request, $response);
     }
 }
 
 sub compare_results {
 	my ($res, $content, $error, $request, $response) = @_;
+	# simple error based checking for proof-of-concept
 	if (($content =~ /error in your SQL syntax/)) {
                       print "\n".'sql injection found:'."\n"."$uri";
                       # Looks like a match - raise this up to the front end
                       add_vulnerability(
                             $mark,                   # mark structure to identify target
-                            "SQL Injection found", # message
-                            400001,             # tid
+                            "SQL Injection found",   # message
+                            400001,                  # tid
                             0,                       # OSVDB reference
                             $uri,                    # URI
                             $request,                # Request structure for full output
