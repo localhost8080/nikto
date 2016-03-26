@@ -50,9 +50,9 @@ sub jonathans_sql_scanner {
     #test our urls
     foreach my $uri (keys %urls) {
         return if $mark->{'terminate'};
-
+        
         # request by hostname
-        my ($res, $content, $error, $request, $response) = nfetch($uri, "", "GET", "", "", "", "sql_injector");
+        my ($res, $content, $error, $request, $response) = nfetch($mark, "/?$uri", "GET", "", "", "", "sql_injector");
         # perform some pattern matching to quickly check out result
         compare_results($res, $content, $error, $request, $response, $uri, $mark);
     }
@@ -78,9 +78,9 @@ sub set_url {
             $new_uri = $uri->clone;
             #update the parameter with the new injected version
             $new_uri->query_param($key, $injection);
-            print $new_uri."\n";
+            
             # store it as the key in the url array
-            $urls{ $new_uri } = 1;
+            $urls{ $new_uri->query } = 1;
         }
     }
 }
