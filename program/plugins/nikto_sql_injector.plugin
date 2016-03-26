@@ -78,9 +78,7 @@ sub nikto_sql_injector {
         # request by hostname
         my ($res, $content, $error, $request, $response) = nfetch($mark, $uri, "GET", "", "", "", "sql_injector");
 
-
-        if ($res eq "200") {
-                if (($content =~ /error in your SQL syntax/)) {
+        if (($content =~ /error in your SQL syntax/)) {
                       print "\n".'sql injection found:'."\n"."$uri";
                       # Looks like a match - raise this up to the front end
                       add_vulnerability(
@@ -91,8 +89,8 @@ sub nikto_sql_injector {
                             $uri,                    # URI
                             $request,                # Request structure for full output
                             $response);              # Response structure for full output
-               }
-        }
+         }
+        
     }
 }
 
